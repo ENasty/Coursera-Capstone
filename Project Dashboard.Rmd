@@ -1,0 +1,107 @@
+---
+title: "What Makes People Happy?"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+# Importing libraries
+library(flexdashboard)
+library(tidyverse)
+library(highcharter)
+library(gt)
+library(htmltools)
+library(viridis)
+library(janitor)
+library(ggplot2)
+library(plotly)
+```
+
+```{r}
+#Import data
+df <- read_csv('2019.csv', show_col_types = FALSE)
+
+#Clean up Colnames
+df <- df %>% clean_names()
+
+#Removing Duplicates
+df <- df %>%
+  distinct(country_or_region, .keep_all = TRUE) %>%
+  rename(rank = "overall_rank")
+```
+
+By: Eric Alfajora
+============================================================================
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Happiness vs Wealthy
+
+```{r}
+scatterplot <- ggplot(df, aes(x = score, y = gdp_per_capita)) + 
+  geom_point(aes(color = country_or_region)) +
+  geom_smooth(method = "loess") +
+  labs (y = "GDP per capita (scaled)",
+        x = "Happiness Score",
+        subtitle = "Is there a correlation?",
+        caption = "Source: Kaggle") +
+  ggtitle("Wealth vs Happiness (2019)") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(plot.title = element_text(face = "bold")) +
+  theme(plot.subtitle = element_text(hjust =0.5)) +
+  theme(plot.subtitle = element_text(face = "italic")) +
+  theme(axis.title = element_text(size = 9))
+
+ggplotly(scatterplot)
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Top 10 Countries 
+
+```{r}
+#Colors
+custom_colors <- viridis::cividis(n = 10)
+
+#Top 10 Happiest Countries by Rank
+df %>% 
+  group_by(score) %>% 
+  arrange(desc(score)) %>% 
+  head(10) %>% 
+  hchart('column', hcaes(x = country_or_region, y = score, color = custom_colors)) %>% 
+  hc_add_theme(hc_theme_google()) %>% 
+  hc_tooltip(pointFormat = '<b> Happiness score: </b> {point.y} <b>') %>% 
+  hc_title(text = 'Top 10 Happiest Countries (2019)',
+           style = list(fontSize = '23px', fontWeight = 'bold')) %>% 
+  hc_subtitle(text = 'Based on Score',
+              style = list(fontSize = '14px'))
+  
+  
+  
+```
+
+### Chart C
+
+```{r}
+#Colors
+custom_colors2 <- viridis::mako(5)
+
+#Corruption vs Happiness
+df %>% 
+  group_by(healthy_life_expectancy) %>% 
+  arrange(desc(healthy_life_expectancy)) %>% 
+  head(5) %>% 
+  hchart('bar', hcaes(x = country_or_region, y = healthy_life_expectancy, colors = custom_colors2)) %>% 
+  hc_add_theme(hc_theme_google()) %>% 
+  hc_tooltip(pointFormat = '<b> Life expectancy (scaled): </b> {point.y} <br>') %>% 
+  hc_title(text = 'Country vs Life Expectancy',
+           style = list(fontSize = '23px', fontWeight = 'bold')) %>% 
+  hc_subtitle(text = 'Based on Life Expectancy (scaled)',
+              style = list(fontSize = '14px'))
+
+```
+
